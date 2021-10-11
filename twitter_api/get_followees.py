@@ -66,19 +66,20 @@ def bearer_oauth(r):
 
 
 def connect_to_endpoint(url, params):
-    response = requests.request("GET", url, auth=bearer_oauth, params=params)
-
-    if response.status_code != 200:
-        if response.status_code == 429:
-            # rate limiter sleep
-            time.sleep(910)
-        else:
-            raise Exception(
-                "Request returned an error: {} {}".format(
-                    response.status_code, response.text
+    while True:
+        response = requests.request("GET", url, auth=bearer_oauth, params=params)
+        if response.status_code != 200:
+            if response.status_code == 429:
+                # rate limiter sleep
+                time.sleep(910) # sleep 15 min
+            else:
+                raise Exception(
+                    "Request returned an error: {} {}".format(
+                        response.status_code, response.text
+                    )
                 )
-            )
-    return response.json()
+        else:
+            return response.json()
 
 
 def main():
@@ -93,9 +94,6 @@ def main():
     # init the model object
     count = 1
     for user in users:
-        if (count % 15) == 0:
-            # rate limiter sleep
-            time.sleep(910)
         url = create_url(user)
         params = get_params()
         json_response = connect_to_endpoint(url, params)

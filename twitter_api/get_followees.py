@@ -29,10 +29,10 @@ def check_for_error(user_id, followee_json, output_folder):
         return True
     return False
 
-def check_if_no_followees(user_id, followee_json):
+def check_if_no_followees(followee_json):
     if 'meta' in followee_json:
-        if 'result_cnt' in followee_json['meta']:
-            if followee_json['meta']['result_cnt'] == 0:
+        if 'result_count' in followee_json['meta']:
+            if followee_json['meta']['result_count'] == 0:
                 return True
     return False
 
@@ -44,7 +44,7 @@ def write_result_followees(user_id, followee_json, output_folder):
             with open(os.path.join(output_folder, "user_followee_map.csv"), 'a') as outputfile:
                 for followee in followee_json['data']:
                     outputfile.write(f"{user_id},{followee['id']}\n")
-        elif check_if_no_followees(user_id, followee_json, output_folder):
+        elif check_if_no_followees(followee_json):
             with open(os.path.join(output_folder, "users_with_no_followees.csv"), 'a') as outputfile:
                 outputfile.write(f"{user_id}\n")
         else:
@@ -69,13 +69,15 @@ def connect_to_endpoint(url, params):
     response = requests.request("GET", url, auth=bearer_oauth, params=params)
 
     if response.status_code != 200:
-        raise Exception(
-            "Request returned an error: {} {}".format(
-                response.status_code, response.text
+        if response.status_code == 429:
+            # rate limiter sleep
+            time.sleep(910)
+        else:
+            raise Exception(
+                "Request returned an error: {} {}".format(
+                    response.status_code, response.text
+                )
             )
-        )
-    else:
-        print(response.status_code)
     return response.json()
 
 
@@ -87,21 +89,19 @@ def main():
     argparser.add_argument("--output_folder", type=str, default='', help="The folder to use for output")
     argparser.add_argument("--skip_lines", type=int, default=0, help="Number of lines to skip in input - used for resuming failed jobs")
     args = argparser.parse_args()
-    users = get_users_list(args.csv_location, argparser.skip_lines)
+    users = get_users_list(args.csv_location, args.skip_lines)
     # init the model object
-    count = 0
-
+    count = 1
     for user in users:
-        if count == 15:
+        if (count % 15) == 0:
             # rate limiter sleep
             time.sleep(910)
-            count = 0
         url = create_url(user)
         params = get_params()
         json_response = connect_to_endpoint(url, params)
         write_result_followees(user, json_response, args.output_folder)
+        print(F"Finished {count + args.skip_lines}")
         count += 1
-        print(F"Finished {count + argparser.skip_lines}")
 
 if __name__ == "__main__":
     main()

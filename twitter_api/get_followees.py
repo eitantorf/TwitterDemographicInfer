@@ -9,10 +9,13 @@ import config
 def create_url(user_id):
     return "https://api.twitter.com/2/users/{}/following".format(user_id)
 
-def get_users_list(csv_location):
+def get_users_list(csv_location, num_lines_to_skip):
     with open(csv_location) as file_in:
         lines = []
         for line in file_in:
+            if num_lines_to_skip > 0:
+                num_lines_to_skip -= 1
+                continue
             lines.append(line.strip())
     return lines
 
@@ -64,13 +67,15 @@ def bearer_oauth(r):
 
 def connect_to_endpoint(url, params):
     response = requests.request("GET", url, auth=bearer_oauth, params=params)
-    print(response.status_code)
+
     if response.status_code != 200:
         raise Exception(
             "Request returned an error: {} {}".format(
                 response.status_code, response.text
             )
         )
+    else:
+        print(response.status_code)
     return response.json()
 
 
@@ -80,8 +85,9 @@ def main():
     argparser = argparse.ArgumentParser("Get user followees based on csv of user ids")
     argparser.add_argument("--csv_location", type=str, default='', help="The input csv file")
     argparser.add_argument("--output_folder", type=str, default='', help="The folder to use for output")
+    argparser.add_argument("--skip_lines", type=int, default=0, help="Number of lines to skip in input - used for resuming failed jobs")
     args = argparser.parse_args()
-    users = get_users_list(args.csv_location)
+    users = get_users_list(args.csv_location, argparser.skip_lines)
     # init the model object
     count = 0
 
@@ -95,6 +101,7 @@ def main():
         json_response = connect_to_endpoint(url, params)
         write_result_followees(user, json_response, args.output_folder)
         count += 1
+        print(F"Finished {count + argparser.skip_lines}")
 
 if __name__ == "__main__":
     main()

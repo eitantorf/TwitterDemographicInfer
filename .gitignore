@@ -1,0 +1,5 @@
+config.py
+/data/*
+/.idea/*
+/.ipynb_checkpoints/*
+/output/*

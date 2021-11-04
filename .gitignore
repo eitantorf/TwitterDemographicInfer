@@ -3,3 +3,4 @@ config.py
 /.idea/*
 /.ipynb_checkpoints/*
 /output/*
+/utils/client_secrets.json

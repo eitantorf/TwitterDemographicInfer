@@ -7,7 +7,7 @@ import config
 
 
 def create_url(user_id):
-    return "https://api.twitter.com/2/users/{}/following".format(user_id)
+    return f"https://api.twitter.com/2/users/{user_id}/following"
 
 def get_users_list(csv_location, num_lines_to_skip):
     with open(csv_location) as file_in:
@@ -36,6 +36,12 @@ def check_if_no_followees(followee_json):
                 return True
     return False
 
+def get_next_token(followee_json):
+    if 'meta' in followee_json:
+        if 'next_token' in followee_json['meta']:
+            return followee_json['meta']['next_token']
+    return None
+
 
 def write_result_followees(user_id, followee_json, output_folder):
     has_error = check_for_error(user_id, followee_json, output_folder)
@@ -49,10 +55,12 @@ def write_result_followees(user_id, followee_json, output_folder):
                 outputfile.write(f"{user_id}\n")
         else:
             print(user_id + ' resulted in and unknown issue, json is: ' + str(followee_json))
+    return get_next_token(followee_json)
 
-def get_params():
+def get_params(next_token=None):
+    if next_token is not None:
+        return {"max_results":"1000", "pagination_token": next_token}
     return {"max_results":"1000"}
-    #return {"user.fields": "created_at"}
 
 
 def bearer_oauth(r):
@@ -94,11 +102,16 @@ def main():
     # init the model object
     count = 1
     for user in users:
-        url = create_url(user)
-        params = get_params()
-        json_response = connect_to_endpoint(url, params)
-        write_result_followees(user, json_response, args.output_folder)
-        print(F"Finished {count + args.skip_lines}")
+        iterate_needed = True
+        next_token = None
+        while iterate_needed:
+            url = create_url(user)
+            params = get_params(next_token)
+            json_response = connect_to_endpoint(url, params)
+            next_token = write_result_followees(user, json_response, args.output_folder)
+            if next_token is None:
+                iterate_needed = False
+        print(F"Finished {count + args.skip_lines} users")
         count += 1
 
 if __name__ == "__main__":

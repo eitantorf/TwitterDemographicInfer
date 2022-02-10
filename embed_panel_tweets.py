@@ -44,17 +44,14 @@ def run_spark_embedding(dt, user_bucket_start, num_iters=num_iters_to_hold_clust
             schm.add("created_at_bucket", T.StringType(), False, None)
             schm.add("user_id_bucket", T.IntegerType(), False, None)
             panel_tweets = spark.read.json(DATA_PATH, schema=schm)
-            panel_tweets = panel_tweets.filter(
-                "created_at_bucket > '2020-07-31' AND created_at_bucket <= '2020-11-30'") \
-                .select("id", panel_tweets.user.id.alias("user_id"), "full_text", "user_id_bucket")
+            panel_tweets = panel_tweets.select("id", panel_tweets.user.id.alias("user_id"), "full_text", "user_id_bucket")
             sample_tweets = panel_tweets.join(sample_uids, on=F.col("panel_uid") == F.col("user_id")).drop("panel_uid")
-
 
             t0 = time.time()
 
             print(f"started embedding DATA_PATH={DATA_PATH}")
 
-            embed_df = panel_tweets.repartition(60).withColumn("embed", embed_batch_udf(F.col('full_text')))
+            embed_df = sample_tweets.repartition(60).withColumn("embed", embed_batch_udf(F.col('full_text')))
             embed_df.write.save(
                 path="/user/etorf/panel_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
 

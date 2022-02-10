@@ -24,7 +24,7 @@ def run_spark_embedding(dt, user_bucket_start, num_iters=num_iters_to_hold_clust
                             .config("spark.sql.execution.arrow.enabled", "true")\
                             .getOrCreate() as spark:
         spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")
-        sample_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_uids_ten_per")
+        sample_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_uids")
         tokenizer = BertTokenizer.from_pretrained('DeepPavlov/bert-base-cased-conversational')
         model = BertModel.from_pretrained('DeepPavlov/bert-base-cased-conversational', return_dict=True)
         bc_tokenizer = spark.sparkContext.broadcast(tokenizer)

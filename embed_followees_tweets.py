@@ -56,17 +56,15 @@ def run_spark_embedding(dt):
 
             t0 = time.time()
 
-            print(f"started embedding for date={dt} and user_id_bucket in {str(i)}")
+            print(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: Started embedding for date={dt} and user_id_bucket in {str(i)}")
 
             embed_df = sample_tweets.drop_duplicates().repartition(60).withColumn("embed", embed_batch_udf(F.col('full_text'))).drop("full_text")
             embed_df.write.save(
                 path="/user/etorf/followee_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
 
-            print(f"it took {time.time() - t0} seconds")
+            print(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: It took {time.time() - t0} seconds")
 
 cur_date = start_date
 while cur_date <= end_date:
     run_spark_embedding(cur_date)
     cur_date += datetime.timedelta(days=1)
-
-

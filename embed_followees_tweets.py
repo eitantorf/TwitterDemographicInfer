@@ -60,7 +60,7 @@ def run_spark_embedding(dt):
 
             embed_df = sample_tweets.drop_duplicates().repartition(60).withColumn("embed", embed_batch_udf(F.col('full_text'))).drop("full_text")
             embed_df.write.save(
-                path="/user/etorf/panel_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
+                path="/user/etorf/followee_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
 
             print(f"it took {time.time() - t0} seconds")
 

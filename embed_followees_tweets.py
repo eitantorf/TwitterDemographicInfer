@@ -49,7 +49,7 @@ def run_spark_embedding(dt):
             schm = T.StructType.fromJson(json.load(open("/home/nir/spark_stuff/decahose_schema.json")))
             schm.add("ds", T.StringType(), False, None)
             decahose_tweets = spark.read.json("/user/nir/decahose_tweets", schema=schm)
-            decahose_tweets = decahose_tweets.filter(f"ds == {dt}")
+            decahose_tweets = decahose_tweets.filter(f"ds == '{dt}'")
             decahose_tweets = decahose_tweets.select("id", decahose_tweets.user.id.alias("user_id"), "text")
 
             sample_tweets = decahose_tweets.join(followee_uids, on=F.col("followee_uid")==F.col("user_id")).drop("followee_uid")

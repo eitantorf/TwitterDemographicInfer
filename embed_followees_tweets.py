@@ -28,7 +28,7 @@ def run_spark_embedding(dt):
                                 .config("spark.sql.execution.arrow.enabled", "true")\
                                 .getOrCreate() as spark:
             spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")
-            followee_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_uids")
+            followee_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_followee_uids")
             followee_uids = followee_uids.withColumn('user_id_bucket', followee_uids.followee_uid % 40)
             followee_uids = followee_uids.filter(f"user_id_bucket >= {str(i[0])} AND user_id_bucket <= {str(i[1])}")
             followee_uids = followee_uids.withColumn("user_id_bucket", followee_uids.user_id_bucket.cast('string'))

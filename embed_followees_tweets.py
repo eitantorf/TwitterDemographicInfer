@@ -58,7 +58,7 @@ def run_spark_embedding(dt):
 
             print(f"{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: Started embedding for date={dt} and user_id_bucket in {str(i)}")
 
-            embed_df = sample_tweets.drop_duplicates().repartition(60).withColumn("embed", embed_batch_udf(F.col('full_text'))).drop("full_text")
+            embed_df = sample_tweets.drop_duplicates().repartition(60).withColumn("embed", embed_batch_udf(F.col('text'))).drop("text")
             embed_df.write.save(
                 path="/user/etorf/followee_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
 

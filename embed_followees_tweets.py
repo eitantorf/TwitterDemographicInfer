@@ -11,8 +11,7 @@ import datetime
 import ujson as json
 import time
 import pandas as pd
-
-num_iters_to_hold_cluster = 4
+import logging
 
 findspark.os.environ["PYSPARK_DRIVER_PYTHON"] = "python3"
 findspark.os.environ["PYSPARK_PYTHON"]=   "./environment/bin/python"
@@ -26,6 +25,7 @@ def run_spark_embedding(start_dt, end_dt):
                             .config("spark.archives", "onnx_conda_env.tar.gz#environment")\
                             .config("spark.sql.execution.arrow.enabled", "true")\
                             .getOrCreate() as spark:
+        logging.info(f"Spark started")
         spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")
         followee_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_followee_uids")
         followee_uids = followee_uids.withColumn('user_id_bucket', followee_uids.followee_uid % 40)
@@ -54,15 +54,18 @@ def run_spark_embedding(start_dt, end_dt):
 
         t0 = time.time()
 
-        print(f"{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: Started embedding for start_dt={start_dt} and end_dt={end_dt}")
+        logging.info(f"Started embedding for start_dt={start_dt} and end_dt={end_dt}")
 
         embed_df = sample_tweets.drop_duplicates().repartition(60).withColumn("embed", embed_batch_udf(F.col('text'))).drop("text")
         embed_df.write.save(
             path="/user/etorf/followee_sample_embeddings", format="parquet", mode="append", compression="gzip", partitionBy=["user_id_bucket"])
 
-        print(f"{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: It took {time.time() - t0} seconds")
+        logging.info(f"It took {time.time() - t0} seconds")
 
         spark.stop()
+
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S', filename="log_embed_spark.log", filemode="a")
+logging.info("*************************Starting**********************************")
 
 cur_date = start_date
 while cur_date <= end_date:

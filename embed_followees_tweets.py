@@ -24,7 +24,7 @@ def run_spark_embedding(start_dt, num_days=1):
                             .config("spark.sql.execution.arrow.enabled", "true")\
                             .getOrCreate() as spark:
         logging.info(f"Spark started")
-        for day in range(num_days):
+        for k in range(num_days):
             dt = start_dt.strftime("%Y-%m-%d") # convert to string
             for i in [(0,19), (20,39)]: # further split user_bucket to two to shorten each cycle
                 spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")

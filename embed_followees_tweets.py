@@ -19,7 +19,7 @@ start_date = datetime.datetime(2020, 8, 1)
 end_date = datetime.datetime(2020, 11, 30)
 
 def run_spark_embedding(start_dt, num_days=1):
-    with SparkSession.builder.appName(f"t_embed_{start_dt.replace('-','')}")\
+    with SparkSession.builder.appName(f"t_embed_{start_dt.strftime('%Y-%m-%d').replace('-','')}")\
                             .config("spark.archives", "onnx_conda_env.tar.gz#environment")\
                             .config("spark.sql.execution.arrow.enabled", "true")\
                             .getOrCreate() as spark:

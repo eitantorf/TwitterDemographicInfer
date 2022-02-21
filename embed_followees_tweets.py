@@ -23,11 +23,11 @@ def run_spark_embedding(start_dt, num_days=1):
                             .config("spark.archives", "onnx_conda_env.tar.gz#environment")\
                             .config("spark.sql.execution.arrow.enabled", "true")\
                             .getOrCreate() as spark:
+        spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")
         logging.info(f"Spark started")
         for day in range(num_days):
             dt = start_dt.strftime("%Y-%m-%d") # convert to string
             for i in [(0,19), (20,39)]: # further split user_bucket to two to shorten each cycle
-                spark.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "8")
                 followee_uids = spark.read.parquet("/user/etorf/panel/panel_sample_final_followee_uids")
                 followee_uids = followee_uids.withColumn('user_id_bucket', followee_uids.followee_uid % 40)
                 followee_uids = followee_uids.withColumn("user_id_bucket", followee_uids.user_id_bucket.cast('string'))
@@ -64,7 +64,7 @@ def run_spark_embedding(start_dt, num_days=1):
 
                 logging.info(f"Finished embedding. It took {time.time() - t0} seconds")
 
-                start_dt += datetime.timedelta(days=1) #add 1 day to continue to next day
+            start_dt += datetime.timedelta(days=1) #add 1 day to continue to next day
 
         spark.stop()
 
@@ -73,6 +73,6 @@ logging.info("*************************Starting*********************************
 
 cur_date = start_date
 while cur_date <= end_date:
-    run_spark_embedding(cur_date, 3)
-    cur_date += datetime.timedelta(days=4)
-    time.sleep(7200)
+    run_spark_embedding(cur_date, 2)
+    cur_date += datetime.timedelta(days=3)
+    time.sleep(5000)

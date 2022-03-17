@@ -75,4 +75,4 @@ cur_date = start_date
 while cur_date <= end_date:
     run_spark_embedding(cur_date, 2)
     cur_date += datetime.timedelta(days=3)
-    time.sleep(5000)
+    time.sleep(14400)
